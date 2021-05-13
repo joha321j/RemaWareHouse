@@ -31,9 +31,7 @@ namespace RemaWareHouse
             });
             services.AddDbContext<WarehouseContext>(
                 options => options.UseSqlite(
-                    Configuration.GetConnectionString("WarehouseContext")
-                    )
-                );
+                    Configuration.GetConnectionString("WarehouseContext")));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
