@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Logging;
+using RemaWareHouse.DataTransferObjects;
 using RemaWareHouse.Exceptions;
+using RemaWareHouse.Exceptions.Loggers;
 using RemaWareHouse.Models;
 using RemaWareHouse.Persistency;
-using RemaWareHouse.Services.Suppliers;
+using RemaWareHouse.Services;
 
 namespace RemaWareHouse.Controllers
 {
@@ -15,18 +19,23 @@ namespace RemaWareHouse.Controllers
     public class SuppliersController : ControllerBase
     {
         private readonly ILogger<SuppliersController> _logger;
-        private readonly GetSuppliersService _getSuppliersService;
-        private readonly PutSuppliersService _putSuppliersService;
-        private readonly PostSuppliersService _postSuppliersService;
-        private readonly DeleteSuppliersService _deleteSuppliersService;
+        private readonly IExceptionLogger _exceptionLogger;
+        private readonly PostService _postService;
+        private readonly PutService<Supplier> _putService;
+        private readonly DeleteService<Supplier> _deleteService;
+        private readonly GetService<Supplier> _getService;
 
-        public SuppliersController(ILogger<SuppliersController> logger, WarehouseContext context)
+        public SuppliersController(
+            ILogger<SuppliersController> logger,
+            WarehouseContext context,
+            IExceptionLogger exceptionLogger)
         {
             _logger = logger;
-            _getSuppliersService = new GetSuppliersService(context);
-            _putSuppliersService = new PutSuppliersService(context);
-            _postSuppliersService = new PostSuppliersService(context);
-            _deleteSuppliersService = new DeleteSuppliersService(context);
+            _exceptionLogger = exceptionLogger;
+            _postService = new PostService(context);
+            _putService = new PutService<Supplier>(context, context.Suppliers);
+            _deleteService = new DeleteService<Supplier>(context, context.Suppliers, nameof(Supplier));
+            _getService = new GetService<Supplier>(context.Suppliers, nameof(Supplier));
 
         }
 
@@ -35,7 +44,7 @@ namespace RemaWareHouse.Controllers
         {
             try
             {
-                return await _getSuppliersService.GetSuppliersAsync(supplierId);
+                return Ok(await _getService.GetAsync(supplierId));
             }
             catch (EntityNotFoundException notFoundException)
             {
@@ -43,44 +52,53 @@ namespace RemaWareHouse.Controllers
             }
             catch (Exception exception)
             {
-                LogException(exception);
+                _exceptionLogger.LogException(exception, nameof(SuppliersController), _logger);
                 throw;
             }
         }
 
         [HttpPut]
-        public async Task<IActionResult> Put(Supplier supplier, int supplierId)
+        public async Task<IActionResult> Put(SupplierDto supplierDto, int supplierId)
         {
             try
             {
-                bool hasOverWritten =  await _putSuppliersService.PutAsync(supplier, supplierId);
+                Supplier temp = new Supplier(supplierDto);
+                bool hasOverwritten =  await _putService.PutAsync(temp, supplierId);
 
-                if (hasOverWritten)
+                IEnumerable<Supplier> result = await _getService.GetAsync(supplierId);
+                if (hasOverwritten)
                 {
-                    return Ok(supplier);
+                    return Ok(result.FirstOrDefault());
                 }
 
-                return CreatedAtAction(nameof(Put), supplierId, supplier);
+                return CreatedAtAction(
+                    nameof(Put), 
+                    supplierId,
+                    result.FirstOrDefault());
             }
             catch (Exception exception)
             {
-                LogException(exception);
+                _exceptionLogger.LogException(exception, nameof(SuppliersController), _logger);
                 throw;
             }
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post(Supplier supplier)
+        public async Task<IActionResult> Post(SupplierDto supplierDto)
         {
             try
             {
-                int id = await _postSuppliersService.PostAsync(supplier);
-
-                return CreatedAtAction(nameof(Post), id, supplier);
+                Supplier temp = new Supplier(supplierDto);
+                Supplier result = await _postService.PostAsync(temp);
+                
+                return CreatedAtAction(
+                    nameof(Post),
+                    result.Id,
+                    result);
             }
             catch (Exception exception)
             {
-                LogException(exception);
+                _exceptionLogger.LogException(exception, nameof(SuppliersController), _logger);
                 throw;
             }
         }
@@ -90,7 +108,7 @@ namespace RemaWareHouse.Controllers
         {
             try
             {
-                await _deleteSuppliersService.DeleteAsync(supplierId);
+                await _deleteService.DeleteAsync(supplierId);
                 return NoContent();
             }
             catch (EntityNotFoundException exception)
@@ -99,14 +117,9 @@ namespace RemaWareHouse.Controllers
             }
             catch (Exception exception)
             {
-                LogException(exception);
+                _exceptionLogger.LogException(exception, nameof(SuppliersController), _logger);
                 throw;
             }
-        }
-
-        private void LogException(Exception exception)
-        {
-            _logger.Log(LogLevel.Error, @"Could not return suppliers: {Exception}", exception);
         }
     }
 }

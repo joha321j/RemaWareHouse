@@ -1,6 +1,6 @@
 namespace RemaWareHouse.Models
 {
-    public class Unit
+    public class Unit : IModel
     {
         public int Id { get; set; }
         

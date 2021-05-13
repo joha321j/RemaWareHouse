@@ -1,9 +1,24 @@
 using System.ComponentModel.DataAnnotations;
+using RemaWareHouse.DataTransferObjects;
 
 namespace RemaWareHouse.Models
 {
-    public class Supplier
+    public class Supplier : IModel
     {
+        public Supplier()
+        {
+            
+        }
+        public Supplier(SupplierDto supplierDto)
+        {
+            Name = supplierDto.Name;
+            Address = supplierDto.Address;
+            ZipCode = supplierDto.ZipCode;
+            NameOfContactPerson = supplierDto.NameOfContactPerson;
+            Email = supplierDto.Email;
+            PhoneNumber = supplierDto.PhoneNumber;
+        }
+
         [Key]
         public int Id { get; set; }
         

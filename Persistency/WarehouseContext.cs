@@ -16,6 +16,6 @@ namespace RemaWareHouse.Persistency
 
         public WarehouseContext(DbContextOptions<WarehouseContext> options) : base(options)
         {
-        }
+        }   
     }
 }
