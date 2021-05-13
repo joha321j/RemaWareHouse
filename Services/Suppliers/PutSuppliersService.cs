@@ -14,23 +14,7 @@ namespace RemaWareHouse.Services.Suppliers
             _context = context;
         }
 
-        public async Task<bool> PutAsync(Supplier supplier, int? supplierId)
-        {
-            bool hasOverwritten = false;
-            if (supplierId.HasValue)
-            {
-                hasOverwritten = await PutSupplierAsync(supplier, supplierId.Value);
-            }
-            else
-            {
-                await AddSupplierAsync(supplier);
-            }
-
-            return hasOverwritten;
-        }
-        
-
-        private async Task<bool> PutSupplierAsync(Supplier supplier, int supplierId)
+        public async Task<bool> PutAsync(Supplier supplier, int supplierId)
         {
             bool hasOverwritten = false;
             supplier.Id = supplierId;

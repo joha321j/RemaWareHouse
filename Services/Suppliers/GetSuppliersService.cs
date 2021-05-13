@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using RemaWareHouse.Exceptions;
 using RemaWareHouse.Models;
 using RemaWareHouse.Persistency;
 
@@ -23,11 +24,18 @@ namespace RemaWareHouse.Services.Suppliers
 
         private async Task<ActionResult<IEnumerable<Supplier>>> GetSpecificSupplierAsync(int supplierId)
         {
-            List<Supplier> suppliers = new List<Supplier>
-            {
-                await _context.Suppliers.FirstOrDefaultAsync(supplier => supplier.Id == supplierId)
-            };
+            List<Supplier> suppliers = new List<Supplier>();
 
+            Supplier supplier = await _context.Suppliers.FindAsync(supplierId);
+
+            if (supplier == null)
+            {
+                throw new EntityNotFoundException(
+                    "No supplier with given ID exists. Id given was: " 
+                    + supplierId);
+            }
+
+            suppliers.Add(supplier);
             return suppliers;
         }
 

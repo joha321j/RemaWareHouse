@@ -37,6 +37,10 @@ namespace RemaWareHouse.Controllers
             {
                 return await _getSuppliersService.GetSuppliersAsync(supplierId);
             }
+            catch (EntityNotFoundException notFoundException)
+            {
+                return NotFound(notFoundException.Message);
+            }
             catch (Exception exception)
             {
                 LogException(exception);
@@ -45,7 +49,7 @@ namespace RemaWareHouse.Controllers
         }
 
         [HttpPut]
-        public async Task<IActionResult> Put(Supplier supplier, int? supplierId)
+        public async Task<IActionResult> Put(Supplier supplier, int supplierId)
         {
             try
             {
@@ -91,7 +95,7 @@ namespace RemaWareHouse.Controllers
             }
             catch (EntityNotFoundException exception)
             {
-                return BadRequest(exception.Message);
+                return NotFound(exception.Message);
             }
             catch (Exception exception)
             {
