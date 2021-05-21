@@ -40,11 +40,11 @@ namespace RemaWareHouse.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Category>>> Get(int? categoryId)
+        public async Task<ActionResult<IEnumerable<Category>>> Get(int? id)
         {
             try
             {
-                return Ok(await _getService.GetAsync(categoryId));
+                return Ok(await _getService.GetAsync(id));
             }
             catch (EntityNotFoundException notFoundException)
             {
@@ -77,26 +77,26 @@ namespace RemaWareHouse.Controllers
             }
         }
 
-        [HttpPut]
-        public async Task<ActionResult<Category>> Put(CategoryDto categoryDto, int categoryId)
+        [HttpPut("{id:int}")]
+        public async Task<ActionResult<Category>> Put(CategoryDto categoryDto, int id)
         {
             try
             {
-                if (categoryId == 0)
+                if (id == 0)
                 {
                     return BadRequest("Id cannot be 0");
                 }
                 
                 Category temp = new Category(categoryDto);
-                bool hasOverwritten = await _putService.PutAsync(temp, categoryId);
-                IEnumerable<Category> result = await _getService.GetAsync(categoryId);
+                bool hasOverwritten = await _putService.PutAsync(temp, id);
+                IEnumerable<Category> result = await _getService.GetAsync(id);
                 
                 if (hasOverwritten)
                 {
                     return Ok(result.FirstOrDefault());
                 }
 
-                return CreatedAtAction(nameof(Put), categoryId, result.FirstOrDefault());
+                return CreatedAtAction(nameof(Put), id, result.FirstOrDefault());
             }
             catch (Exception exception)
             {
@@ -105,12 +105,12 @@ namespace RemaWareHouse.Controllers
             }
         }
 
-        [HttpDelete]
-        public async Task<ActionResult<Category>> Delete(int categoryId)
+        [HttpDelete("{id:int}")]
+        public async Task<ActionResult<Category>> Delete(int id)
         {
             try
             {
-                await _deleteService.DeleteAsync(categoryId);
+                await _deleteService.DeleteAsync(id);
                 return NoContent();
             }
             catch (EntityNotFoundException exception)

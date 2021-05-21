@@ -47,14 +47,14 @@ namespace RemaWareHouse.Controllers
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Product>>> Get(
-            int? productId,
+            int? id,
             bool withCategory = true,
             bool withSupplier = true,
             bool withUnit = true)
         {
             try
             {
-                return Ok(await _getService.GetAsync(productId, withCategory, withSupplier, withUnit));
+                return Ok(await _getService.GetAsync(id, withCategory, withSupplier, withUnit));
             }
             catch (EntityNotFoundException notFoundException)
             {
@@ -92,22 +92,21 @@ namespace RemaWareHouse.Controllers
             }
         }
 
-        [HttpPut]
-
-        public async Task<IActionResult> Put(ProductDto productDto, int productId)
+        [HttpPut("{id:int}")]
+        public async Task<IActionResult> Put(ProductDto productDto, int id)
         {
             try
             {
-                if (productId == 0)
+                if (id == 0)
                 {
                     return BadRequest("Id cannot be 0");
                 }
                 await _validationService.EnsureValidDependencies(productDto);
                 Product temp = new Product(productDto, _context);
 
-                bool hasOverwritten =  await _putService.PutAsync(temp, productId);
+                bool hasOverwritten =  await _putService.PutAsync(temp, id);
 
-                IEnumerable<Product> result = await _getService.GetAsync(productId);
+                IEnumerable<Product> result = await _getService.GetAsync(id);
                 if (hasOverwritten)
                 {
                     return Ok(result.FirstOrDefault());
@@ -115,7 +114,7 @@ namespace RemaWareHouse.Controllers
 
                 return CreatedAtAction(
                     nameof(Put), 
-                    productId,
+                    id,
                     result.FirstOrDefault());
             }
             catch (EntityNotFoundException notFoundException)
@@ -129,12 +128,12 @@ namespace RemaWareHouse.Controllers
             }
         }
         
-        [HttpDelete]
-        public async Task<IActionResult> Delete(int productId)
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(int id)
         {
             try
             {
-                await _deleteService.DeleteAsync(productId);
+                await _deleteService.DeleteAsync(id);
                 return NoContent();
             }
             catch (EntityNotFoundException exception)
