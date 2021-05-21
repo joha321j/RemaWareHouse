@@ -59,4 +59,14 @@ Jeg har valgt at gøre brug af en SQLite database.
 Jeg valgte at gøre det frem for en in-memory database, da jeg så slap for at skulle skrive kode, der seeder min database hver gang, men jeg i stedet kunne populere min database ved hjælp af mine ejne endpoints.
 Heldigvis er det nemt at udskifte databasen - man skal blot ændre databasetypen i ens Startup klasse under ConfigureServices metoden.
 
+\subsection*{Indkludering af underklasser i produkt}
+Get endpointet i min ProductController tager 3 booleans:
+\begin{enumerate}
+    \item withUnit
+    \item withCategory
+    \item withSupplier
+\end{enumerate}
+
+Ideen med dette er, at man skulle kunne vælge, hvorvidt man ville have alt dataen som min Unit, Category og Supplier klasser indeholder, eller blot deres id'er.
+
 \end{document}
