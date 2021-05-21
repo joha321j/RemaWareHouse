@@ -1,7 +1,22 @@
-﻿namespace RemaWareHouse.Models
+﻿using RemaWareHouse.DataTransferObjects;
+
+namespace RemaWareHouse.Models
 {
     public class Product : IModel
     {
+        public Product()
+        {
+        }
+        public Product(ProductDto productDto)
+        {
+            Name = productDto.Name;
+            Unit = productDto.Unit;
+            AmountInPackage = productDto.AmountInPackage;
+            Price = productDto.Price;
+            Category = productDto.Category;
+            Supplier = productDto.Supplier;
+        }
+
         public int Id { get; set; }
         
         public string Name { get; set; }

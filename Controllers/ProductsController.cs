@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using RemaWareHouse.DataTransferObjects;
 using RemaWareHouse.Exceptions;
 using RemaWareHouse.Exceptions.Loggers;
 using RemaWareHouse.Models;
@@ -19,7 +20,7 @@ namespace RemaWareHouse.Controllers
         private readonly ILogger<ProductsController> _logger;
         private readonly IExceptionLogger _exceptionLogger;
 
-        private readonly PostService _postService;
+        private readonly PostProductService _postService;
         private readonly PutService<Product> _putService;
         private readonly GetProductsService _getService;
         private readonly DeleteService<Product> _deleteService;
@@ -32,7 +33,7 @@ namespace RemaWareHouse.Controllers
             _logger = logger;
             _exceptionLogger = exceptionLogger;
             
-            _postService = new PostService(context);
+            _postService = new PostProductService(context);
             _putService = new PutService<Product>(context, context.Products);
             _getService = new GetProductsService(context);
             _deleteService = new DeleteService<Product>(context, context.Products, nameof(Product));
@@ -58,6 +59,25 @@ namespace RemaWareHouse.Controllers
                 _exceptionLogger.LogException(exception, nameof(SuppliersController), _logger);
                 throw;
             }
-        } 
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<Product>> Post(ProductDto productDto)
+        {
+            try
+            {
+                Product temp = new Product(productDto);
+                Product result = await _postService.PostAsync(temp);
+                return CreatedAtAction(
+                    nameof(Post),
+                    result.Id,
+                    result);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+        }
     }
 }
