@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -20,10 +21,13 @@ namespace RemaWareHouse.Controllers
         private readonly ILogger<ProductsController> _logger;
         private readonly IExceptionLogger _exceptionLogger;
 
-        private readonly PostProductService _postService;
-        private readonly PutService<Product> _putService;
+        private readonly WarehouseContext _context;
+        
         private readonly GetProductsService _getService;
+        private readonly PostService _postService;
+        private readonly PutService<Product> _putService;
         private readonly DeleteService<Product> _deleteService;
+        private readonly ValidationService _validationService;
 
         public ProductsController(
             ILogger<ProductsController> logger,
@@ -31,20 +35,22 @@ namespace RemaWareHouse.Controllers
             IExceptionLogger exceptionLogger)
         {
             _logger = logger;
+            _context = context;
             _exceptionLogger = exceptionLogger;
             
-            _postService = new PostProductService(context);
+            _postService = new PostService(context);
             _putService = new PutService<Product>(context, context.Products);
             _getService = new GetProductsService(context);
             _deleteService = new DeleteService<Product>(context, context.Products, nameof(Product));
+            _validationService = new ValidationService(context);
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Product>>> Get(
             int? productId,
-            bool withCategory = false,
-            bool withSupplier = false,
-            bool withUnit = false)
+            bool withCategory = true,
+            bool withSupplier = true,
+            bool withUnit = true)
         {
             try
             {
@@ -66,16 +72,78 @@ namespace RemaWareHouse.Controllers
         {
             try
             {
-                Product temp = new Product(productDto);
+                await _validationService.EnsureValidDependencies(productDto);
+                Product temp = new Product(productDto, _context);
                 Product result = await _postService.PostAsync(temp);
+
                 return CreatedAtAction(
                     nameof(Post),
                     result.Id,
                     result);
             }
+            catch (EntityNotFoundException notFoundException)
+            {
+                return BadRequest(notFoundException.Message);
+            }
             catch (Exception e)
             {
                 Console.WriteLine(e);
+                throw;
+            }
+        }
+
+        [HttpPut]
+
+        public async Task<IActionResult> Put(ProductDto productDto, int productId)
+        {
+            try
+            {
+                if (productId == 0)
+                {
+                    return BadRequest("Id cannot be 0");
+                }
+                await _validationService.EnsureValidDependencies(productDto);
+                Product temp = new Product(productDto, _context);
+
+                bool hasOverwritten =  await _putService.PutAsync(temp, productId);
+
+                IEnumerable<Product> result = await _getService.GetAsync(productId);
+                if (hasOverwritten)
+                {
+                    return Ok(result.FirstOrDefault());
+                }
+
+                return CreatedAtAction(
+                    nameof(Put), 
+                    productId,
+                    result.FirstOrDefault());
+            }
+            catch (EntityNotFoundException notFoundException)
+            {
+                return BadRequest(notFoundException.Message);
+            }
+            catch (Exception exception)
+            {
+                _exceptionLogger.LogException(exception, nameof(UnitsController), _logger);
+                throw;
+            }
+        }
+        
+        [HttpDelete]
+        public async Task<IActionResult> Delete(int productId)
+        {
+            try
+            {
+                await _deleteService.DeleteAsync(productId);
+                return NoContent();
+            }
+            catch (EntityNotFoundException exception)
+            {
+                return NotFound(exception.Message);
+            }
+            catch (Exception exception)
+            {
+                _exceptionLogger.LogException(exception, nameof(UnitsController), _logger);
                 throw;
             }
         }

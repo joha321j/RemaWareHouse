@@ -82,6 +82,11 @@ namespace RemaWareHouse.Controllers
         {
             try
             {
+                if (categoryId == 0)
+                {
+                    return BadRequest("Id cannot be 0");
+                }
+                
                 Category temp = new Category(categoryDto);
                 bool hasOverwritten = await _putService.PutAsync(temp, categoryId);
                 IEnumerable<Category> result = await _getService.GetAsync(categoryId);

@@ -1,11 +1,10 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.EntityFrameworkCore;
 using RemaWareHouse.Exceptions;
 using RemaWareHouse.Persistency;
 using RemaWareHouse.Models;
-using SQLitePCL;
 
 namespace RemaWareHouse.Services.ProductsServices
 {
@@ -24,42 +23,52 @@ namespace RemaWareHouse.Services.ProductsServices
             bool withSupplier = false,
             bool withUnit = false)
         {
+            
+            IQueryable<Product> queryable = IncludeDependencies(withCategory, withSupplier, withUnit);
+            
             List<Product> products = new List<Product>();
             
-            DbSet<Product> set = _context.Products;
-            
-            if (withCategory)
-            {
-                set.Include(c => c.Category);
-            }
-
-            if (withSupplier)
-            {
-                set.Include(c => c.Supplier);
-            }
-
-            if (withUnit)
-            {
-                set.Include(c => c.Unit);
-            }
-
             if (productId.HasValue)
             {
-                Product product = await FindProduct(productId.Value, set);
+                Product product = await FindProductAsync(productId.Value, queryable);
                 
                 products.Add(product);
             }
             else
             {
-                products = await set.ToListAsync();
+                products = await queryable.ToListAsync();
             }
-
+            
             return products;
         }
 
-        private static async Task<Product> FindProduct(int productId, DbSet<Product> set)
+        private IQueryable<Product> IncludeDependencies(bool withCategory, bool withSupplier, bool withUnit)
         {
-            Product product = await set.FindAsync(productId);
+            IQueryable<Product> set = _context.Products;
+
+            if (withCategory)
+            {
+                set = set.Include(p => p.Category);
+            }
+            
+            if (withSupplier)
+            {
+                set = set.Include(p => p.Supplier);
+            }
+
+            if (withUnit)
+            {
+                set = set.Include(p => p.Unit);
+            }
+
+            return set;
+        }
+
+        private static async Task<Product> FindProductAsync(int productId, IQueryable<Product> set)
+        {
+            List<Product> products = await set.ToListAsync();
+
+            Product product = products.Find(p => p.Id == productId);
 
             if (product == null)
             {
