@@ -1,5 +1,6 @@
 \documentclass[a4paper]{article}
 
+\author{Johannes Ehlers Nyholm Thomsen}
 % Danish symbols.
 \usepackage[utf8]{inputenc}
 \usepackage[danish]{babel}
@@ -11,7 +12,51 @@
 
 \begin{document}
 
-\section{Udvikling af RemaWareHouse API}
+\title{Udvikling af RemaWareHouse API}
 
+\maketitle
+
+\subsection*{Github link: \url{https://github.com/joha321j/RemaWareHouse}}
+
+\subsection*{Enhed som klasse}
+Jeg valgte at udvide data modellen fra det angivne ved at tilføje endnu en model,
+der repræsenterer enheder.
+Dette har jeg valgt at gøre, da jeg nemt kan forestille mig,
+at de samme enheder vil gå igen: cm, kg, g, etc.
+
+\subsection*{Generic Services}
+For at undgå, at mine controllers bliver store gudeklasser har jeg valgt,
+at de skal gøre brug af bagvedliggende services.
+
+Først lavede jeg en service til hver af de simple klasser; 
+enheder, leverrandører og kategorier.
+Jeg opdagede dog, at alt for meget af koden gik igen i mellem hver service.
+Derfor besluttede jeg mig for at benytte mig af generics,
+så i stedet lavede jeg en generic service for hver CRUD operation.
+
+Desværre kan min product klasse ikke bruge min generiske service til Read operationen,
+da product klassen indeholder referencer til mine tre simple klasser.
+Referencerne gør, at jeg er nød til at gøre brug af include statements,
+så Entity Framework følger referencerne og læser alt dataen med ud.
+
+Heldigvis er det ikke tilfældet for de tre andre CRUD operationer.
+
+\subsection*{Create og Update product}
+Når man forsøger at skabe eller opdatere et produkt,
+checker API'en om de angivne kategori, enhed og leverrandør eksisterer.
+Hvis mindst én af dem ikke findes returneres et BadRequest med statuskode 400.
+Det har jeg valgt at gøre, da jeg ikke mener, 
+at product endpointet skal kunne bruges til at lave nye kategorier, enheder
+eller leverrandører.
+De har alle hver deres endpoint. 
+
+\subsection*{Data transfer objects}
+Alle mine create og update endpoints gør brug af data transfer objects.
+Dette har jeg valgt at gøre, så brugeren ikke har kontrol over objektets id - pånær når PUT endpoints bruger.
+
+\subsection*{Valg af database}
+Jeg har valgt at gøre brug af en SQLite database.
+Jeg valgte at gøre det frem for en in-memory database, da jeg så slap for at skulle skrive kode, der seeder min database hver gang, men jeg i stedet kunne populere min database ved hjælp af mine ejne endpoints.
+Heldigvis er det nemt at udskifte databasen - man skal blot ændre databasetypen i ens Startup klasse under ConfigureServices metoden.
 
 \end{document}
